@@ -1,0 +1,20 @@
+{
+	"name": "Where Is My Fox?",
+	"type": "certified",
+	"description": "Find your device anywhere!",
+	"icons": {
+		"128" : "/logos/128.png",
+		"64"  : "/logos/64.png"
+	},
+	"launch_path": "/index.html",
+	"developer": {"url": "http://whereismyfox.com", "name": "Where Is My Fox"},
+	"permissions": {
+		"desktop-notification":{},
+		"push":{},
+		"geolocation":{},
+		"systemXHR": {},
+		"device-storage:pictures": { "access": "readwrite" }
+	},
+	"messages": [{ "push": "/index.html" }],
+	"version": "1"
+}
