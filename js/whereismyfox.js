@@ -107,16 +107,11 @@ geoConfigButton.addEventListener("click", function() {
     }, moveToErrorStep, {maximumAge: 0});
 });
 
-var pushRequest = navigator.push.register();
-var pushURLInput = document.getElementById("push-url");
-
-pushRequest.onsuccess = function() {
-  pushURLInput.value = pushRequest.result;
-}
-
 var submitButton = document.getElementById("register-submit");
 submitButton.addEventListener("click", function(event) {
   event.preventDefault();
+
+  var pushURLInput = document.getElementById("push-url");
   if (!pushURLInput.value) {
     moveToErrorStep();
     return;
@@ -130,11 +125,13 @@ submitButton.addEventListener("click", function(event) {
 
   doPUT(API_BASE_URL + "/device/", obj, function(response) {
     me = JSON.parse(response);
-    registerCommands(me, moveToNextStep, moveToErrorStep);
+
+    deviceRegistered(me);
+    moveToNextStep();
   }, moveToErrorStep);
 });
 
-var currentStep = 1;
+var currentStep;
 
 function moveToStep(next) {
   var current = document.getElementById("setup-step" + currentStep);
@@ -154,7 +151,34 @@ function moveToErrorStep() {
   moveToStep(error);
 }
 
+function beginDeviceRegistration() {
+  var pushRequest = navigator.push.register();
+  var pushURLInput = document.getElementById("push-url");
+
+  pushRequest.onsuccess = function() {
+    pushURLInput.value = pushRequest.result;
+  }
+}
+
+function deviceRegistered(me) {
+  registerCommands(me); // refresh commands on the server
+  window.localStorage.setItem("me", JSON.stringify(me));
+}
+
 document.body.onload = function() {
+  me = JSON.parse(window.localStorage.getItem("me"));
+  if (me === null) {
+    console.log("No previous registration, starting wizard!");
+
+    currentStep = 1;
+    beginDeviceRegistration();
+  } else {
+    console.log("Already have a registration: " + JSON.stringify(me));
+
+    currentStep = 4;
+    deviceRegistered(me);
+  }
+
   var current = document.getElementById("setup-step" + currentStep);
   current.classList.add("active-step");
 }
