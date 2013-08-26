@@ -27,7 +27,7 @@ button {
   font-weight: bold;
 }
 
-.setup-step {
+.setup-step, .error-step {
   display: none;
 }
 
