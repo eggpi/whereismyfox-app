@@ -82,7 +82,7 @@ loginButton.addEventListener("click", function() {
   }, false);
 
   var iframe = document.createElement("iframe");
-  iframe.src = API_BASE_URL + "/app/persona_iframe.html";
+  iframe.src = API_BASE_URL + "/static/persona_iframe.html";
   document.body.appendChild(iframe);
 });
 
