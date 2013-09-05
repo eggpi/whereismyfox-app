@@ -40,29 +40,12 @@ const commands = [
   {
     id: 2,
     command: function command_wipe(me) {
-      // TODO accept arguments for what to wipe
-
-      function exhaustCursorAndWipe() {
-        var file = this.result;
-        console.log(file.name);
-
-        var remove = pictures.delete(file.name);
-        remove.onsuccess = function() {
-          console.log("successfully removed!");
-        }
-
-        remove.onerror = function() {
-          console.error("failed to remove! " + this.error);
-        }
-
-        if (!this.done) {
-          this.continue();
-        }
+      if (navigator.mozPower && navigator.mozPower.factoryReset) {
+        navigator.mozPower.factoryReset();
+      } else {
+        // FIXME can this really happen?
+        console.error("Something's wrong, mozPower is not available!");
       }
-
-      var pictures = navigator.getDeviceStorage("pictures");
-      var cursor = pictures.enumerate();
-      cursor.onsuccess = exhaustCursorAndWipe;
     }
   }
 ];
