@@ -18,7 +18,7 @@ const commands = [
             API_BASE_URL + "/device/location/" + me.Id,
             {
               "latitude": position.coords.latitude,
-            "longitude": position.coords.longitude
+              "longitude": position.coords.longitude
             }, null, null);
         }
       );
