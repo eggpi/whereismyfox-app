@@ -13,7 +13,7 @@
 		"push":{},
 		"geolocation":{},
 		"systemXHR": {},
-		"device-storage:pictures": { "access": "readwrite" }
+		"power": {}
 	},
 	"messages": [{ "push": "/index.html" }],
 	"version": "1"
