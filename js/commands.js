@@ -14,12 +14,17 @@ const commands = [
             position.coords.longitude + ")"
             );
 
-          doPOST(
-            API_BASE_URL + "/device/location/" + me.Id,
-            {
+          doHTTPReqwest({
+            url: API_BASE_URL + "/device/location/" + me.Id,
+            method: "POST",
+            contentType: "application/x-www-form-urlencoded",
+            data: {
               "latitude": position.coords.latitude,
               "longitude": position.coords.longitude
-            }, null, null);
+            },
+            headers: {
+              "Accept": "*/*"
+            }});
         }
       );
     }
@@ -58,7 +63,17 @@ function registerCommands(me, onsuccess, onerror) {
   var url = API_BASE_URL + "/device/" + me.Id + "/command";
 
   console.log("sending commands " + JSON.stringify(cmdids) + " to " + url);
-  doPUT(url, cmdids, onsuccess, onerror);
+  doHTTPReqwest({
+    url: url,
+    method: "PUT",
+    data: JSON.stringify(cmdids),
+    contentType: "application/json",
+    headers: {
+      "Accept": "*/*"
+    },
+    success: onsuccess,
+    error: onerror
+  });
 }
 
 function runCommand(invocation, me) {

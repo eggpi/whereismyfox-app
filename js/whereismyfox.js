@@ -1,78 +1,51 @@
 var me = null;
 
-var API_BASE_URL = "http://whereismyfox.com";
-function makeXHR(url, method, onsuccess, onerror) {
-  var xhr = new XMLHttpRequest({mozSystem: true});
-  xhr.open(method, url);
+var API_BASE_URL = "http://localhost:8080";
+function doHTTPReqwest(options) {
+  if (!options.headers) {
+    options.headers = {};
+  }
 
   // use session cookie if we have one
   var session = window.localStorage.getItem("session-cookie");
   if (session) {
-    xhr.setRequestHeader("Cookie", session);
+    options.headers["Cookie"] = session;
   }
 
-  xhr.setRequestHeader("Connection", "close");
-  xhr.onload = function() {
-    if (xhr.status == 200) {
-      var session = xhr.getResponseHeader("Set-Cookie");
-      if (session) {
-        window.localStorage.setItem("session-cookie", session);
-      }
+  options.headers["Connection"] = "close";
+  options.params = {mozSystem: true};
 
-      if (onsuccess) {
-        onsuccess(xhr.responseText);
-      }
+  var onsuccess = options.success;
+  options.success = successHandler;
 
-      return;
+  var request = reqwest(options);
+  function successHandler(response) {
+    var xhr = request.request;
+    var session = xhr.getResponseHeader("Set-Cookie");
+    if (session) {
+      window.localStorage.setItem("session-cookie", session);
     }
 
-    if (onerror) {
-      onerror();
+    if (onsuccess) {
+      onsuccess(response);
     }
-  };
-
-  xhr.onerror = onerror;
-  return xhr;
-}
-
-function doGET(url, onsuccess, onerror) {
-  var xhr = makeXHR(url, "GET", onsuccess, onerror);
-  xhr.setRequestHeader("Accept", "application/json");
-  xhr.send(null);
-}
-
-function doPUT(url, obj, onsuccess, onerror) {
-  var payload = JSON.stringify(obj);
-
-  var xhr = makeXHR(url, "PUT", onsuccess, onerror);
-  xhr.setRequestHeader("Content-length", payload.length);
-  xhr.setRequestHeader("Content-type", "application/json; charset=UTF-8");
-  xhr.setRequestHeader("Accept", "application/json");
-  xhr.send(payload);
-}
-
-function doPOST(url, form, onsuccess, onerror) {
-  var xhr = makeXHR(url, "POST", onsuccess, onerror);
-
-  var param = [];
-  for (var key in form) {
-    param.push(key + "=" + form[key]);
   }
-
-  param = param.join("&");
-
-  xhr.setRequestHeader("Content-length", param.length);
-  xhr.setRequestHeader("Content-type",
-                       "application/x-www-form-urlencoded; charset=UTF-8");
-  xhr.send(param);
 }
 
 function onMailVerified(assertion) {
   console.log(assertion);
-  doPOST(API_BASE_URL + "/auth/applogin",
-      {assertion: assertion},
-      moveToNextStep,
-      moveToErrorStep);
+
+  doHTTPReqwest({
+    url: API_BASE_URL + "/auth/applogin",
+    method: "POST",
+    data: {assertion: assertion},
+    contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+    type: "json",
+    success: moveToNextStep,
+    error: function() {
+      moveToErrorStep("Persona failed to verify!");
+    }
+  });
 }
 
 var loginButton = document.getElementById("persona-login");
@@ -89,13 +62,18 @@ loginButton.addEventListener("click", function() {
 navigator.mozSetMessageHandler("push", function(message) {
   console.log("Got push notification!");
 
-  doGET(API_BASE_URL + "/device/invocation/" + message.version,
-        function(invocation) {
-          console.log("Got this invocation " + invocation);
-          runCommand(JSON.parse(invocation), me);
-        }, function() {
-          console.error("Failed to fetch invocation");
-        });
+  doHTTPReqwest({
+    url: API_BASE_URL + "/device/invocation/" + message.version,
+    method: "GET",
+    success: function(invocation) {
+      console.log("Got this invocation " + JSON.stringify(invocation));
+      runCommand(invocation, me);
+    },
+    error: function() {
+      console.error("Failed to fetch invocation");
+    },
+    type: "json"
+  });
 });
 
 var geoConfigButton = document.getElementById("begin-geo-config");
@@ -125,11 +103,22 @@ submitButton.addEventListener("click", function(event) {
     obj[fields[i].name] = fields[i].value;
   }
 
-  doPUT(API_BASE_URL + "/device/", obj, function(response) {
-    me = JSON.parse(response);
-    deviceRegistered(me);
-  }, function() {
-    moveToErrorStep("Our server doesn't seem to like you :(");
+  doHTTPReqwest({
+    url: API_BASE_URL + "/device/",
+    method: "PUT",
+    data: JSON.stringify(obj),
+    contentType: "application/json",
+    headers: {
+      "Accept": "application/json"
+    },
+    type: "json",
+    success: function(response) {
+      me = response;
+      deviceRegistered(me);
+    },
+    error: function() {
+      moveToErrorStep("Our server doesn't seem to like you :(");
+    }
   });
 });
 
@@ -176,10 +165,14 @@ function beginDeviceRegistration() {
 }
 
 function deviceRegistered(me) {
-  registerCommands(me); // refresh commands on the server
-  window.localStorage.setItem("me", JSON.stringify(me));
-
-  moveToSetupStep(4);
+  // refresh commands on the server
+  registerCommands(me, function() {
+    window.localStorage.setItem("me", JSON.stringify(me));
+    moveToSetupStep(4);
+  }, function() {
+    moveToErrorStep(
+      "Huh, our server is acting strangely. Hopefully it's temporary.");
+  });
 }
 
 document.body.onload = function() {
