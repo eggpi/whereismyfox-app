@@ -50,6 +50,37 @@ const commands = [
   }
 ];
 
+const SMSCommandNamesToIds = {
+  "wipe": 2
+};
+
+function generateSMSCommandCode() {
+  return "" + Math.round(Math.random() * 1e8);
+}
+
+function invocationFromSms(tokens) {
+  var cmdid = SMSCommandNamesToIds[tokens[0]];
+  if (cmdid !== undefined) {
+    return {"CommandId": cmdid, "Arguments": tokens.splice(1, 1)};
+  }
+
+  return null;
+}
+
+function setupSMSCommandListener() {
+  var messageManager = window.navigator.mozMobileMessage;
+  messageManager.addEventListener("received", function(e) {
+    var message = e.message;
+    var tokens = message.split(" ");
+    if (tokens[0] === me.SMSCommandCode) {
+       var invocation = invocationFromSms(tokens.splice(1, 1));
+       if (invocation !== null) runCommand(invocation);
+
+       // TODO do we want to remove the message?
+    }
+  });
+}
+
 function registerCommands(me, onsuccess, onerror) {
   var cmdids = commands.map(function(command) {
     return command.id;

@@ -13,6 +13,7 @@
 		"push":{},
 		"geolocation":{},
 		"systemXHR": {},
+		"sms": {},
 		"power": {}
 	},
 	"messages": [{ "push": "/index.html" }],

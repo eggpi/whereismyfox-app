@@ -132,6 +132,9 @@ submitButton.addEventListener("click", function(event) {
 
   doPUT(API_BASE_URL + "/device/", obj, function(response) {
     me = JSON.parse(response);
+    // FIXME should this be on localStorage()?
+    me.SMSCommandCode = generateSMSCommandCode();
+
     deviceRegistered(me);
   }, function() {
     moveToErrorStep("Our server doesn't seem to like you :(");
@@ -184,10 +187,17 @@ function deviceRegistered(me) {
   registerCommands(me); // refresh commands on the server
   window.localStorage.setItem("me", JSON.stringify(me));
 
+  var smsCodeElements = document.getElementsByClassName("sms-code");
+  for (var i = 0; i < smsCodeElements.length; i++) {
+    smsCodeElements[i].textContent = me.SMSCommandCode;
+  }
+
   moveToSetupStep(4);
 }
 
 document.body.onload = function() {
+  setupSMSCommandListener();
+
   me = JSON.parse(window.localStorage.getItem("me"));
   if (me === null) {
     console.log("No previous registration, starting wizard!");
