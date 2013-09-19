@@ -77,13 +77,8 @@ function onMailVerified(assertion) {
 
 var loginButton = document.getElementById("persona-login");
 loginButton.addEventListener("click", function() {
-  window.addEventListener("message", function(event) {
-    onMailVerified(event.data);
-  }, false);
-
-  var iframe = document.createElement("iframe");
-  iframe.src = API_BASE_URL + "/static/persona_iframe.html";
-  document.body.appendChild(iframe);
+  var personaIframe = document.getElementById("persona-iframe");
+  personaIframe.postMessage("start");
 });
 
 navigator.mozSetMessageHandler("push", function(message) {
@@ -183,6 +178,16 @@ function deviceRegistered(me) {
 }
 
 document.body.onload = function() {
+  // create Persona iframe and setup message handler
+  var iframe = document.createElement("iframe");
+  iframe.id = "persona.iframe";
+  iframe.src = API_BASE_URL + "/static/persona_iframe.html";
+  document.body.appendChild(iframe);
+
+  window.addEventListener("message", function(event) {
+    onMailVerified(event.data);
+  }, false);
+
   me = JSON.parse(window.localStorage.getItem("me"));
   if (me === null) {
     console.log("No previous registration, starting wizard!");
