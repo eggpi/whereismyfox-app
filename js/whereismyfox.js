@@ -71,8 +71,8 @@ function onMailVerified(assertion) {
   console.log(assertion);
   doPOST(API_BASE_URL + "/auth/applogin",
       {assertion: assertion},
-      moveToNextStep,
-      moveToErrorStep);
+      moveToNextStep.bind(null, STEP_LOGIN),
+      moveToErrorStep.bind(null, STEP_LOGIN));
 }
 
 var loginButton = document.getElementById("persona-login");
@@ -98,10 +98,12 @@ geoConfigButton.addEventListener("click", function() {
   navigator.geolocation.getCurrentPosition(
     function(position) {
       console.log(position.coords.latitude);
-      moveToNextStep();
-    }, function() {
-      moveToErrorStep("You may want to move somewhere else if you're indoors.");
-    }, {maximumAge: 0});
+      moveToNextStep(STEP_GEOLOCATION);
+    }, moveToErrorStep.bind(
+        null,
+        STEP_GEOLOCATION,
+        "You may want to move somewhere else if you're indoors.")
+    , {maximumAge: 0});
 });
 
 var submitButton = document.getElementById("register-submit");
@@ -110,7 +112,7 @@ submitButton.addEventListener("click", function(event) {
 
   var pushURLInput = document.getElementById("push-url");
   if (!pushURLInput.value) {
-    moveToErrorStep("Looks like a problem on our end.");
+    moveToErrorStep(STEP_REGISTRATION, "Looks like a problem on our end.");
     return;
   }
 
@@ -124,7 +126,7 @@ submitButton.addEventListener("click", function(event) {
     me = JSON.parse(response);
     deviceRegistered(me);
   }, function() {
-    moveToErrorStep("Our server doesn't seem to like you :(");
+    moveToErrorStep(STEP_REGISTRATION, "Our server doesn't seem to like you :(");
   });
 });
 
@@ -132,6 +134,14 @@ var startOverButton = document.getElementById("start-over");
 startOverButton.addEventListener("click", beginDeviceRegistration);
 
 var currentStep;
+
+// registration steps, in order
+const STEP_ERROR = 0,
+      STEP_LOGIN = 1,
+      STEP_GEOLOCATION = 2,
+      STEP_REGISTRATION = 3,
+      STEP_DONE = 4;
+      STEP_INITIAL = 1;
 
 function moveToStepElement(stepElement) {
   var currentElement = document.getElementById("setup-step" + currentStep);
@@ -148,11 +158,16 @@ function moveToSetupStep(step) {
   currentStep = step;
 }
 
-function moveToNextStep() {
+function moveToNextStep(from) {
+  if (currentStep != from) {
+    console.log("step " + currentStep + " != " + from + ", not moving.");
+    return;
+  }
+
   moveToSetupStep(currentStep + 1);
 }
 
-function moveToErrorStep(message) {
+function moveToErrorStep(from, message) {
   var messageElement = document.getElementById("error-message");
   messageElement.textContent = message ? message : "";
 
@@ -167,14 +182,14 @@ function beginDeviceRegistration() {
     pushURLInput.value = pushRequest.result;
   }
 
-  moveToSetupStep(1);
+  moveToSetupStep(STEP_INITIAL);
 }
 
 function deviceRegistered(me) {
   registerCommands(me); // refresh commands on the server
   window.localStorage.setItem("me", JSON.stringify(me));
 
-  moveToSetupStep(4);
+  moveToSetupStep(STEP_DONE);
 }
 
 document.body.onload = function() {
