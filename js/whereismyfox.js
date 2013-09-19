@@ -102,11 +102,16 @@ var geoConfigButton = document.getElementById("begin-geo-config");
 geoConfigButton.addEventListener("click", function() {
   navigator.geolocation.getCurrentPosition(
     function(position) {
-      console.log(position.coords.latitude);
       moveToNextStep();
-    }, function() {
-      moveToErrorStep("You may want to move somewhere else if you're indoors.");
-    }, {maximumAge: 0});
+    }, function(error) {
+      if (error.code === 3) { // timeout is fine
+        moveToNextStep();
+      } else if (error.code == 1) { // permission denied
+        moveToErrorStep("Are you sure you allowed access to your location?");
+      } else { // position unavailable, shouldn't happen
+        moveToErrorStep("Your phone is behaving strangely.");
+      }
+    }, {timeout: 1 /* can't use 0, bug 858827 */});
 });
 
 var submitButton = document.getElementById("register-submit");
