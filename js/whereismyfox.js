@@ -92,7 +92,7 @@ navigator.mozSetMessageHandler("push", function(message) {
   doGET(API_BASE_URL + "/device/invocation/" + message.version,
         function(invocation) {
           console.log("Got this invocation " + invocation);
-          runCommand(JSON.parse(invocation), me);
+          runCommand(JSON.parse(invocation));
         }, function() {
           console.error("Failed to fetch invocation");
         });

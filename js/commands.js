@@ -61,7 +61,7 @@ function registerCommands(me, onsuccess, onerror) {
   doPUT(url, cmdids, onsuccess, onerror);
 }
 
-function runCommand(invocation, me) {
+function runCommand(invocation) {
   var command = null;
 
   for (var i = 0; i < commands.length; i++) {
