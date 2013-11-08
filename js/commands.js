@@ -47,6 +47,25 @@ const commands = [
         console.error("Something's wrong, mozPower is not available!");
       }
     }
+  },
+
+  {
+    id: 3,
+    command: function command_lock(me, args) {
+      var message = args.Message;
+
+      var activity = new MozActivity({
+        name: "lockscreen",
+      });
+
+      activity.onsuccess = function() {
+        var notification = new Notification(message);
+      }
+
+      activity.onerror = function() {
+        console.error("Failed to lock screen!");
+      }
+    }
   }
 ];
 
